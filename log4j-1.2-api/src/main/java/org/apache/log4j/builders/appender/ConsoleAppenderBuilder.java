@@ -114,14 +114,14 @@ public class ConsoleAppenderBuilder extends AbstractBuilder implements AppenderB
             }
         });
         return createAppender(
-                name,
-                layout.get(),
-                filter.get(),
-                level.get(),
                 target.get(),
                 immediateFlush.get(),
                 follow.get(),
-                config);
+                config, new AppenderConfiguration(
+                        name,
+                        layout.get(),
+                        filter.get(),
+                        level.get()));
     }
 
     @Override
@@ -138,25 +138,25 @@ public class ConsoleAppenderBuilder extends AbstractBuilder implements AppenderB
         final String target = getProperty(TARGET_PARAM);
         final boolean follow = getBooleanProperty(FOLLOW_PARAM);
         final boolean immediateFlush = getBooleanProperty(IMMEDIATE_FLUSH_PARAM);
-        return createAppender(name, layout, filter, level, target, immediateFlush, follow, configuration);
+        return createAppender(target, immediateFlush, follow, configuration, new AppenderConfiguration(
+                name,
+                layout,
+                filter,
+                level));
     }
 
     private <T extends Log4j1Configuration> Appender createAppender(
-            final String name,
-            final Layout layout,
-            final Filter filter,
-            final String level,
             final String target,
             final boolean immediateFlush,
             final boolean follow,
-            final T configuration) {
-        final org.apache.logging.log4j.core.Layout<?> consoleLayout = LayoutAdapter.adapt(layout);
+            final T configuration, org.apache.log4j.builders.appender.AppenderConfiguration appenderConfiguration) {
+        final org.apache.logging.log4j.core.Layout<?> consoleLayout = LayoutAdapter.adapt(appenderConfiguration.getLayout());
 
-        final org.apache.logging.log4j.core.Filter consoleFilter = buildFilters(level, filter);
+        final org.apache.logging.log4j.core.Filter consoleFilter = buildFilters(appenderConfiguration.getLevel(), appenderConfiguration.getFilter());
         final ConsoleAppender.Target consoleTarget =
                 SYSTEM_ERR.equals(target) ? ConsoleAppender.Target.SYSTEM_ERR : ConsoleAppender.Target.SYSTEM_OUT;
         return AppenderWrapper.adapt(ConsoleAppender.newBuilder()
-                .setName(name)
+                .setName(appenderConfiguration.getName())
                 .setTarget(consoleTarget)
                 .setFollow(follow)
                 .setLayout(consoleLayout)
